@@ -1,25 +1,15 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../src/pages/LoginPage';
-import { InventoryPage } from '../src/pages/InventoryPage';
-import { CartPage } from '../src/pages/CartPage';
-import { CheckoutPage } from '../src/pages/CheckoutPage';
-import { USERS, PRODUCTS, CHECKOUT_INFO, ERROR_MESSAGES } from '../src/data/testData';
+import { test, expect } from '../src/fixtures/authFixture';
+import { PRODUCTS, CHECKOUT_INFO, ERROR_MESSAGES } from '../src/data/testData';
 
 test.describe('End-to-End Checkout Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.login(USERS.standard.username, USERS.standard.password);
-  });
-
-  test('should complete a full purchase end-to-end', async ({ page }) => {
-    const inventoryPage = new InventoryPage(page);
-    const cartPage = new CartPage(page);
-    const checkoutPage = new CheckoutPage(page);
-
-    await inventoryPage.addProductToCart(PRODUCTS.backpack);
-    await inventoryPage.addProductToCart(PRODUCTS.boltTshirt);
-    await inventoryPage.openCart();
+  test('should complete a full purchase end-to-end', async ({
+    authenticatedInventoryPage,
+    cartPage,
+    checkoutPage,
+  }) => {
+    await authenticatedInventoryPage.addProductToCart(PRODUCTS.backpack);
+    await authenticatedInventoryPage.addProductToCart(PRODUCTS.boltTshirt);
+    await authenticatedInventoryPage.openCart();
 
     const itemsInCart = await cartPage.getItemNames();
     expect(itemsInCart).toEqual([PRODUCTS.backpack, PRODUCTS.boltTshirt]);
@@ -37,13 +27,13 @@ test.describe('End-to-End Checkout Flow', () => {
     await expect(checkoutPage.completeHeader).toHaveText('Thank you for your order!');
   });
 
-  test('should block checkout when required customer fields are missing', async ({ page }) => {
-    const inventoryPage = new InventoryPage(page);
-    const cartPage = new CartPage(page);
-    const checkoutPage = new CheckoutPage(page);
-
-    await inventoryPage.addProductToCart(PRODUCTS.backpack);
-    await inventoryPage.openCart();
+  test('should block checkout when required customer fields are missing', async ({
+    authenticatedInventoryPage,
+    cartPage,
+    checkoutPage,
+  }) => {
+    await authenticatedInventoryPage.addProductToCart(PRODUCTS.backpack);
+    await authenticatedInventoryPage.openCart();
     await cartPage.proceedToCheckout();
 
     await checkoutPage.continueButton.click();
